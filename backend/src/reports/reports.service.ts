@@ -40,7 +40,6 @@ export class ReportsService {
       include: { versions: { include: { file: true } } },
     });
 
-    // Set current version
     await this.prisma.report.update({
       where: { id: report.id },
       data: { currentVersionId: report.versions[0].id },
@@ -105,9 +104,13 @@ export class ReportsService {
 
   async remove(id: string, adminId: string) {
     const report = await this.findOne(id);
+
+    // Supprimer les versions avant les fichiers (FK constraint)
     for (const v of report.versions) {
+      await this.prisma.reportVersion.delete({ where: { id: v.id } });
       await this.filesService.deleteFile(v.fileId);
     }
+
     await this.prisma.report.delete({ where: { id } });
     await this.prisma.auditLog.create({
       data: { adminId, reportId: id, action: 'DELETE_REPORT' },
@@ -118,7 +121,6 @@ export class ReportsService {
   async addVersion(reportId: string, dto: AddVersionDto, file: Express.Multer.File, adminId: string) {
     await this.findOne(reportId);
 
-    // Check version doesn't exist
     const existing = await this.prisma.reportVersion.findUnique({
       where: { reportId_version: { reportId, version: dto.version } },
     });
