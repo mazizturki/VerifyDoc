@@ -10,7 +10,17 @@ async function bootstrap() {
   // Security
   app.use(helmet());
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      const allowed = [
+        process.env.FRONTEND_URL || 'http://localhost:3000',
+        'http://localhost:3000',
+      ];
+      if (!origin || allowed.includes(origin) || /\.vercel\.app$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
 
