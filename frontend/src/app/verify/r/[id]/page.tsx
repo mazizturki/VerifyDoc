@@ -258,8 +258,19 @@ export default function VerifyPage() {
         )}
       </main>
 
-      <footer className="text-center py-6 text-slate-400 text-xs font-mono">
-        VerifyDoc — Plateforme de traçabilité académique
+      <footer className="border-t border-slate-200 bg-white mt-8">
+        <div className="max-w-3xl mx-auto px-4 py-6 flex flex-col items-center gap-1">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-teal-500 rounded flex items-center justify-center">
+              <Shield className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-slate-700 text-sm font-semibold">VerifyDoc</span>
+          </div>
+          <p className="text-slate-400 text-xs text-center">
+            Plateforme conçue par <span className="text-slate-600 font-medium">Mohamed Aziz Turki</span> — une solution pour garantir l'authenticité et l'intégrité des rapports.
+          </p>
+          <p className="text-slate-300 text-[10px] font-mono">Système de traçabilité et d'authentification des rapports académiques</p>
+        </div>
       </footer>
     </div>
   );
