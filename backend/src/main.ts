@@ -5,6 +5,11 @@ import { AppModule } from './app.module';
 import helmet from 'helmet';
 
 async function bootstrap() {
+  // Fix BigInt JSON serialization
+  (BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+  };
+
   const app = await NestFactory.create(AppModule);
 
   // Security
