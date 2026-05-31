@@ -1,0 +1,8 @@
+{
+  "build": {
+    "cmd": "npm install && npx prisma generate && npm run build"
+  },
+  "deploy": {
+    "cmd": "npx prisma migrate deploy && node dist/main"
+  }
+}
