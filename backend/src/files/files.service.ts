@@ -24,8 +24,9 @@ export class FilesService implements OnModuleInit {
       useSSL: this.config.get('MINIO_USE_SSL', 'false') === 'true',
       accessKey: this.config.get('MINIO_ACCESS_KEY'),
       secretKey: this.config.get('MINIO_SECRET_KEY'),
+      region: 'eu-central-003',
+      pathStyle: true,
     });
-
     await this.ensureBucket();
   }
 
@@ -42,16 +43,11 @@ export class FilesService implements OnModuleInit {
   }
 
   async uploadPdf(file: Express.Multer.File): Promise<{ fileId: string; sha256: string }> {
-    // Calculate SHA-256
     const hash = createHash('sha256').update(file.buffer).digest('hex');
     const objectName = `pdfs/${Date.now()}-${hash}.pdf`;
-
-    // Upload to MinIO
     await this.client.putObject(this.bucket, objectName, file.buffer, file.size, {
       'Content-Type': 'application/pdf',
     });
-
-    // Save file record
     const fileRecord = await this.prisma.file.create({
       data: {
         originalName: file.originalname,
@@ -60,7 +56,6 @@ export class FilesService implements OnModuleInit {
         size: BigInt(file.size),
       },
     });
-
     return { fileId: fileRecord.id, sha256: hash };
   }
 
