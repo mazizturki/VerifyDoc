@@ -16,34 +16,40 @@ export class ReportsService {
     private filesService: FilesService,
   ) {}
 
-  async create(dto: CreateReportDto, file: Express.Multer.File, adminId: string) {
-    const { fileId, sha256 } = await this.filesService.uploadPdf(file);
+  async create(dto: CreateReportDto, file: Express.Multer.File | undefined, adminId: string) {
+    const reportData: any = {
+      title: dto.title,
+      subtitle: dto.subtitle,
+      authors: dto.authors,
+      supervisors: dto.supervisors,
+      university: dto.university,
+      hostCompany: dto.hostCompany,
+      academicYear: dto.academicYear,
+    };
+
+    if (file) {
+      const { fileId, sha256 } = await this.filesService.uploadPdf(file);
+      reportData.versions = {
+        create: {
+          version: dto.version || '1.0',
+          platformVersion: dto.platformVersion || '1.0.0',
+          sha256Hash: sha256,
+          fileId,
+        },
+      };
+    }
 
     const report = await this.prisma.report.create({
-      data: {
-        title: dto.title,
-        subtitle: dto.subtitle,
-        authors: dto.authors,
-        supervisors: dto.supervisors,
-        university: dto.university,
-        hostCompany: dto.hostCompany,
-        academicYear: dto.academicYear,
-        versions: {
-          create: {
-            version: dto.version || '1.0',
-            platformVersion: dto.platformVersion || '1.0.0',
-            sha256Hash: sha256,
-            fileId,
-          },
-        },
-      },
+      data: reportData,
       include: { versions: { include: { file: true } } },
     });
 
-    await this.prisma.report.update({
-      where: { id: report.id },
-      data: { currentVersionId: report.versions[0].id },
-    });
+    if (report.versions.length > 0) {
+      await this.prisma.report.update({
+        where: { id: report.id },
+        data: { currentVersionId: report.versions[0].id },
+      });
+    }
 
     await this.prisma.auditLog.create({
       data: { adminId, reportId: report.id, action: 'CREATE_REPORT', ipAddress: null },
@@ -105,7 +111,6 @@ export class ReportsService {
   async remove(id: string, adminId: string) {
     const report = await this.findOne(id);
 
-    // Supprimer les versions avant les fichiers (FK constraint)
     for (const v of report.versions) {
       await this.prisma.reportVersion.delete({ where: { id: v.id } });
       await this.filesService.deleteFile(v.fileId);
@@ -162,8 +167,17 @@ export class ReportsService {
 
   async verifyHash(reportId: string, fileBuffer: Buffer) {
     const report = await this.findOne(reportId);
-    const currentVersion = report.versions[0];
-    if (!currentVersion) throw new NotFoundException('No version found');
+
+    // Prioritise currentVersionId; fall back to most-recent version
+    const currentVersion = report.currentVersionId
+      ? (report.versions.find((v: any) => v.id === report.currentVersionId) ?? report.versions[0])
+      : report.versions[0];
+
+    if (!currentVersion) {
+      throw new NotFoundException(
+        'Aucune version officielle disponible. Uploadez le PDF final via "Uploader PDF final".',
+      );
+    }
 
     const providedHash = this.filesService.computeHash(fileBuffer);
     const match = providedHash === currentVersion.sha256Hash;
