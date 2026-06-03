@@ -28,6 +28,7 @@ export default function VerifyPage() {
   const [verifying, setVerifying] = useState(false);
   const [result, setResult] = useState<VerifyResult | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showTechnical, setShowTechnical] = useState(false);
 
   useEffect(() => {
     reportsApi.getPublic(id)
@@ -126,24 +127,35 @@ export default function VerifyPage() {
                 ))}
               </div>
 
-              {/* Technical info */}
-              <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 space-y-3">
-                <div>
-                  <div className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">UUID</div>
-                  <span className="font-mono text-xs text-slate-600 bg-white px-2 py-1 rounded border border-slate-200">{report.id}</span>
-                </div>
-                {currentVersion && (
-                  <div>
-                    <div className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1 flex items-center gap-1.5">
-                      <Hash className="w-3 h-3" />Hash SHA-256 officiel
+              {/* Technical info — collapsible */}
+              <div className="border-t border-slate-100">
+                <button
+                  onClick={() => setShowTechnical((v: boolean) => !v)}
+                  className="w-full px-5 py-3 flex items-center justify-between text-left hover:bg-slate-50 transition"
+                >
+                  <span className="text-xs text-slate-400 font-medium uppercase tracking-wide flex items-center gap-1.5">
+                    <Hash className="w-3 h-3" />Détails techniques
+                  </span>
+                  {showTechnical ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                </button>
+                {showTechnical && (
+                  <div className="px-5 pb-4 bg-slate-50 space-y-3">
+                    <div>
+                      <div className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">UUID</div>
+                      <span className="font-mono text-xs text-slate-600 bg-white px-2 py-1 rounded border border-slate-200">{report.id}</span>
                     </div>
-                    <HashDisplay hash={currentVersion.sha256Hash} />
-                  </div>
-                )}
-                {currentVersion && (
-                  <div>
-                    <div className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Date de génération</div>
-                    <span className="text-slate-600 text-sm">{new Date(currentVersion.generatedAt).toLocaleDateString('fr-FR', { dateStyle: 'long' })}</span>
+                    {currentVersion && (
+                      <div>
+                        <div className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Hash SHA-256 officiel</div>
+                        <HashDisplay hash={currentVersion.sha256Hash} />
+                      </div>
+                    )}
+                    {currentVersion && (
+                      <div>
+                        <div className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Date de génération</div>
+                        <span className="text-slate-600 text-sm">{new Date(currentVersion.generatedAt).toLocaleDateString('fr-FR', { dateStyle: 'long' })}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
