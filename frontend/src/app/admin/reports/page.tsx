@@ -12,10 +12,8 @@ import {
 function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (report: Report) => void }) {
   const [form, setForm] = useState({
     title: '', subtitle: '', university: '', hostCompany: '',
-    academicYear: '', version: '1.0', platformVersion: '1.0.0',
-    authors: '', supervisors: '',
+    academicYear: '', authors: '', supervisors: '',
   });
-  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,16 +23,13 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
       const fd = new FormData();
       fd.append('title', form.title);
       if (form.subtitle) fd.append('subtitle', form.subtitle);
-      fd.append('authors', JSON.stringify(form.authors.split('\n').map(s => s.trim()).filter(Boolean)));
-      fd.append('supervisors', JSON.stringify(form.supervisors.split('\n').map(s => s.trim()).filter(Boolean)));
+      fd.append('authors', JSON.stringify(form.authors.split('\n').map((s: string) => s.trim()).filter(Boolean)));
+      fd.append('supervisors', JSON.stringify(form.supervisors.split('\n').map((s: string) => s.trim()).filter(Boolean)));
       fd.append('university', form.university);
       if (form.hostCompany) fd.append('hostCompany', form.hostCompany);
       fd.append('academicYear', form.academicYear);
-      fd.append('version', form.version);
-      fd.append('platformVersion', form.platformVersion);
-      if (file) fd.append('pdf', file);
       const created = await reportsApi.create(fd);
-      toast.success('Rapport créé');
+      toast.success('Rapport créé — téléchargez le QR code et uploadez le PDF final');
       onCreated(created);
       onClose();
     } catch (err: any) {
@@ -84,46 +79,12 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
               <input className="input" placeholder="2023-2024" value={form.academicYear} onChange={e => setForm(f => ({...f, academicYear: e.target.value}))} required />
             </div>
             <div>
-              <label className="label">Version initiale</label>
-              <input className="input" value={form.version} onChange={e => setForm(f => ({...f, version: e.target.value}))} />
-            </div>
-            <div>
               <label className="label">Auteurs (un par ligne) *</label>
               <textarea className="input h-20 resize-none" value={form.authors} onChange={e => setForm(f => ({...f, authors: e.target.value}))} required placeholder="Prénom Nom&#10;Prénom Nom" />
             </div>
             <div>
               <label className="label">Encadrants (un par ligne) *</label>
               <textarea className="input h-20 resize-none" value={form.supervisors} onChange={e => setForm(f => ({...f, supervisors: e.target.value}))} required placeholder="Dr. Nom&#10;Prof. Nom" />
-            </div>
-
-            {/* PDF — optionnel */}
-            <div className="col-span-2">
-              <label className="label">
-                PDF officiel
-                <span className="ml-2 text-xs font-normal text-slate-400">(optionnel — uploadez le PDF final après avoir intégré le QR code)</span>
-              </label>
-              <div
-                className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition ${file ? 'border-teal-400 bg-teal-50' : 'border-slate-200 hover:border-teal-300 hover:bg-slate-50'}`}
-                onClick={() => document.getElementById('pdf-create')?.click()}
-              >
-                <input id="pdf-create" type="file" accept="application/pdf" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
-                {file ? (
-                  <div className="flex items-center justify-center gap-2 text-teal-700">
-                    <FileText className="w-5 h-5" />
-                    <span className="text-sm font-medium">{file.name}</span>
-                    <span className="text-xs text-teal-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-                    <button type="button" onClick={e => { e.stopPropagation(); setFile(null); }} className="ml-1 text-teal-400 hover:text-teal-600">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="text-slate-400">
-                    <Upload className="w-6 h-6 mx-auto mb-1" />
-                    <p className="text-sm">Cliquer pour sélectionner un PDF</p>
-                    <p className="text-xs mt-0.5 text-slate-300">Max 50 MB — vous pouvez aussi le faire après</p>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
 
